@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1769aa">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AW-Aufträge">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>AW-Aufträge</title>
+<style>
+:root{color-scheme:light dark;--blue:#1769aa;--bg:#f3f5f8;--card:#fff;--fg:#18212b;--muted:#667085;--line:#dce2e9;--red:#d92d20}
+@media(prefers-color-scheme:dark){:root{--bg:#10151b;--card:#1b232d;--fg:#edf2f7;--muted:#aab6c5;--line:#34404d;--blue:#68aef0;--red:#ff7168}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--blue);color:white;padding:calc(16px + env(safe-area-inset-top)) 16px 16px}header h1{margin:0;font-size:1.35rem}header p{margin:5px 0 0;opacity:.9;font-size:.9rem}
+main{max-width:900px;margin:auto;padding:14px 12px calc(28px + env(safe-area-inset-bottom))}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+button,input{font:inherit}button{border:0;border-radius:10px;padding:10px 12px;cursor:pointer}
+.tab,.secondary{background:var(--card);color:var(--fg);border:1px solid var(--line)}.tab{font-weight:650}.tab.active,.primary{background:var(--blue);color:white;border-color:var(--blue)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px #00000008}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}h2{font-size:1.05rem;margin:0}
+label{display:block;font-size:.9rem;font-weight:650}label span{display:block;margin-bottom:5px}
+input{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--fg)}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+.total{display:flex;justify-content:space-between;align-items:center;gap:12px}.total strong{font-size:1.45rem;color:var(--blue)}
+.muted,.hint{color:var(--muted)}.hint{font-size:.85rem;line-height:1.4}
+.entry{display:flex;gap:9px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}.entry:last-child{border:0;padding-bottom:0}
+.flag{min-width:16px;color:var(--red);font-size:1.4rem;font-weight:900}.entrymain{flex:1;min-width:0}.entrytitle{font-weight:750;overflow-wrap:anywhere}.meta{font-size:.86rem;color:var(--muted);margin-top:4px}.aw{font-weight:750;white-space:nowrap}
+.small{padding:7px 9px;font-size:.83rem}.danger{background:#fff0ef;color:#b42318}.empty{text-align:center;padding:22px 8px;color:var(--muted)}
+.controls{display:flex;align-items:center;gap:7px}.controls input{width:auto;max-width:170px}
+.dayrow{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}.dayrow:last-child{border:0}
+.hidden{display:none!important}
+@media(max-width:520px){.tabs{grid-template-columns:repeat(2,1fr)}.formgrid{grid-template-columns:1fr}.card{padding:12px}}
+@media print{body{background:white;color:black}header,.tabs,#formcard,#summary,#listcard,.no-print{display:none!important}main{padding:0}#printreport{display:block!important}.card{border:0;box-shadow:none}}
+</style>
+</head>
+<body>
+<header><h1>AW-Aufträge</h1><p>Auftragsverwaltung – lokal auf diesem Gerät</p></header>
+<main>
+<nav class="tabs no-print">
+<button class="tab active" data-view="day">Tag</button><button class="tab" data-view="week">Woche</button><button class="tab" data-view="month">Monat</button><button class="tab" data-view="overview">Tagesübersicht</button>
+</nav>
+<section class="card no-print" id="formcard">
+<div class="head"><h2 id="formtitle">Neuen Auftrag anlegen</h2></div>
+<form id="entryform">
+<div class="formgrid">
+<label><span>Datum</span><input id="date" type="date" required></label>
+<label><span>Auftragsnummer</span><input id="number" maxlength="100" placeholder="z. B. 123456" required></label>
+<label><span>AW-Wert</span><input id="awvalue" type="number" min="0" step="0.01" inputmode="decimal" placeholder="z. B. 4,5" required></label>
+</div>
+<div class="actions"><button class="primary" id="save" type="submit">Auftrag speichern</button><button class="secondary hidden" id="cancel" type="button">Abbrechen</button></div>
+</form></section>
+<section class="card no-print" id="summary">
+<div class="head"><h2 id="viewtitle">Aufträge für den Tag</h2>
+<div class="controls" id="datecontrols"><button class="secondary small" id="prev">‹</button><input id="period" type="date"><button class="secondary small" id="next">›</button></div>
+<div class="controls hidden" id="monthcontrols"><button class="secondary small" id="prevmonth">‹</button><input id="month" type="month"><button class="secondary small" id="nextmonth">›</button></div>
+</div>
+<div class="total"><span class="muted" id="totallabel">AW gesamt</span><strong id="total">0 AW</strong></div>
+<p class="hint" id="hint"></p>
+<div class="actions"><button class="secondary" id="pdf">Monatsübersicht als PDF</button></div>
+</section>
+<section class="card no-print" id="listcard"><div class="head"><h2 id="listtitle">Aufträge</h2><span class="muted" id="count"></span></div><div id="entries"></div></section>
+<section id="overview" class="card hidden"></section>
+<section id="printreport" class="hidden"></section>
+<p class="hint no-print">Speicherung nur in diesem Browser und auf diesem Gerät. iPhone und Mac synchronisieren nicht automatisch. Browserdaten löschen kann auch Aufträge löschen.</p>
+</main>
+<script>
+(()=> {
+const KEY="aw_entries_v1", $=id=>document.getElementById(id);
+const today=()=>{let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
+const date=iso=>{let [y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d,12)};
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const add=(s,n)=>{let d=date(s);d.setDate(d.getDate()+n);return iso(d)};
+const monday=s=>{let d=date(s);d.setDate(d.getDate()-(d.getDay()+6)%7);return iso(d)};
+const pretty=s=>date(s).toLocaleDateString("de-DE");
+const fmt=n=>new Intl.NumberFormat("de-DE",{maximumFractionDigits:2}).format(n)+" AW";
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let rows=[];try{rows=JSON.parse(localStorage.getItem(KEY)||"[]");if(!Array.isArray(rows))rows=[]}catch{rows=[]}
+let view="day",editing=null;
+$("date").value=today();$("period").value=today();$("month").value=today().slice(0,7);
+const save=()=>localStorage.setItem(KEY,JSON.stringify(rows));
+const sum=a=>a.reduce((s,e)=>s+Number(e.aw||0),0);
+const ordered=a=>[...a].sort((x,y)=>Number(y.flagged)-Number(x.flagged)||y.date.localeCompare(x.date)||x.number.localeCompare(y.number,"de"));
+function filtered(){let p=$("period").value||today(),m=$("month").value||today().slice(0,7);if(view==="day")return rows.filter(x=>x.date===p);if(view==="week"){let s=monday(p),e=add(s,6);return rows.filter(x=>x.date>=s&&x.date<=e)}return rows.filter(x=>x.date.slice(0,7)===m)}
+function monthData(){let m=$("month").value||today().slice(0,7),a=rows.filter(x=>x.date.slice(0,7)===m),g={};a.forEach(x=>(g[x.date]??=[]).push(x));return {m,a,g,days:Object.keys(g).sort().reverse()}}
+function render(){
+document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.view===view));
+$("datecontrols").classList.toggle("hidden",view==="month"||view==="overview");$("monthcontrols").classList.toggle("hidden",view!=="month");
+$("summary").classList.toggle("hidden",view==="overview");$("listcard").classList.toggle("hidden",view==="overview");$("overview").classList.toggle("hidden",view!=="overview");
+$("viewtitle").textContent=view==="day"?"Aufträge für den Tag":view==="week"?"Aufträge für die Woche":"Aufträge für den Monat";
+let p=$("period").value||today(),m=$("month").value||today().slice(0,7);
+$("hint").textContent=view==="day"?pretty(p):view==="week"?`${pretty(monday(p))} bis ${pretty(add(monday(p),6))}`:m;
+let a=ordered(filtered());$("total").textContent=fmt(sum(a));$("totallabel").textContent=`AW gesamt · ${a.length} Aufträge`;
+$("listtitle").textContent=view==="day"?"Aufträge am ausgewählten Tag":view==="week"?"Aufträge der ausgewählten Woche":"Aufträge im ausgewählten Monat";$("count").textContent=`${a.length} Einträge`;
+$("entries").innerHTML=a.length?a.map(x=>`<article class="entry"><div class="flag">${x.flagged?"!":""}</div><div class="entrymain"><div class="entrytitle">${esc(x.number)}</div><div class="meta">${pretty(x.date)}${x.flagged?" · Markiert":""}</div><div class="actions"><button class="secondary small" data-edit="${x.id}">Bearbeiten</button><button class="secondary small" data-flag="${x.id}">${x.flagged?"Markierung entfernen":"Mit ! markieren"}</button><button class="danger small" data-del="${x.id}">Löschen</button></div></div><div class="aw">${fmt(Number(x.aw))}</div></article>`).join(""):`<div class="empty">Keine Aufträge in diesem Zeitraum.</div>`;
+let {m:month,a:ma,g,days}=monthData();
+$("overview").innerHTML=`<div class="head"><h2>Tagesübersicht · ${esc(month)}</h2><strong>${fmt(sum(ma))}</strong></div>`+(days.length?days.map(d=>`<div class="dayrow"><span>${pretty(d)}<div class="meta">${g[d].length} Aufträge</div></span><strong>${fmt(sum(g[d]))}</strong></div>`).join(""):`<div class="empty">Noch keine Aufträge in diesem Monat.</div>`);
+$("printreport").innerHTML=`<div class="card"><h1>AW-Monatsübersicht</h1><p>Monat: ${esc(month)}</p><h2>Gesamt: ${fmt(sum(ma))}</h2><hr>`+(days.length?days.map(d=>`<div class="dayrow"><span>${pretty(d)} · ${g[d].length} Aufträge</span><strong>${fmt(sum(g[d]))}</strong></div>`).join(""):"<p>Keine Aufträge in diesem Monat.</p>")+"</div>";
+}
+function reset(){editing=null;$("entryform").reset();$("date").value=today();$("formtitle").textContent="Neuen Auftrag anlegen";$("save").textContent="Auftrag speichern";$("cancel").classList.add("hidden")}
+$("entryform").addEventListener("submit",e=>{e.preventDefault();let d=$("date").value,n=$("number").value.trim(),v=Number($("awvalue").value);if(!d||!n||!Number.isFinite(v)||v<0)return;if(editing){let x=rows.find(x=>x.id===editing);if(x)Object.assign(x,{date:d,number:n,aw:v})}else rows.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),date:d,number:n,aw:v,flagged:false});save();reset();$("period").value=d;$("month").value=d.slice(0,7);render()});
+$("cancel").onclick=reset;
+$("entries").addEventListener("click",e=>{let b=e.target.closest("button");if(!b)return;if(b.dataset.edit){let x=rows.find(x=>x.id===b.dataset.edit);if(!x)return;editing=x.id;$("date").value=x.date;$("number").value=x.number;$("awvalue").value=x.aw;$("formtitle").textContent="Auftrag bearbeiten";$("save").textContent="Änderungen speichern";$("cancel").classList.remove("hidden");$("formcard").scrollIntoView({behavior:"smooth"})}else if(b.dataset.flag){let x=rows.find(x=>x.id===b.dataset.flag);if(x)x.flagged=!x.flagged;save();render()}else if(b.dataset.del){let x=rows.find(x=>x.id===b.dataset.del);if(x&&confirm(`Auftrag „${x.number}“ wirklich löschen?`)){rows=rows.filter(y=>y.id!==x.id);save();if(editing===x.id)reset();render()}}});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});
+$("period").onchange=render;$("month").onchange=render;
+$("prev").onclick=()=>{$("period").value=add($("period").value||today(),view==="week"?-7:-1);render()};
+$("next").onclick=()=>{$("period").value=add($("period").value||today(),view==="week"?7:1);render()};
+function shift(n){let [y,m]=($("month").value||today().slice(0,7)).split("-").map(Number),d=new Date(y,m-1+n,1);$("month").value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;render()}
+$("prevmonth").onclick=()=>shift(-1);$("nextmonth").onclick=()=>shift(1);
+$("pdf").onclick=()=>{ $("printreport").classList.remove("hidden");window.print();$("printreport").classList.add("hidden")};
+window.addEventListener("afterprint",()=>$("printreport").classList.add("hidden"));
+if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
+render();
+})();
+</script>
+</body></html>
